@@ -2,9 +2,24 @@ import express from 'express';
 import pool from './database.js';
 import cors from 'cors';
 
+// https 가져오는 로직 추가
+import https from 'https';
+import fs from 'fs';
+
 const app = express();
-app.use(cors());
 app.use(express.json());
+app.use(cors());
+
+// 인증서 파일 가져오기
+const hostname = 'deploy-test.p-e.kr';
+const key = fs.readFileSync(`/etc/letsencrypt/live/${hostname}/privkey.pem`, { encoding: "utf-8" })
+const cert = fs.readFileSync(`/etc/letsencrypt/live/${hostname}/cert.pem`, { encoding: "utf-8" })
+
+// https 추가
+const server = https.createServer({
+    key, 
+    cert,
+}, app);
 
 // 게시글 목록 조회
 app.get('/guestbook', async (req, res) => {
@@ -56,6 +71,6 @@ app.delete('/guestbook/:articleno', async (req, res) => {
 
 
 const PORT = 4000;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
